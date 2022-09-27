@@ -1,4 +1,4 @@
-name: Preflight results from IBM Power
+name: Release Kind Node for Power
   
 # Controls when the workflow will run
 on:
