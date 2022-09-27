@@ -1,0 +1,70 @@
+name: Preflight results from IBM Power
+  
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build
+  release:
+      runs-on: p9-kind-node-runner
+      steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+          
+      - name: Do the cleanup
+        run: |
+          rm -rf $HOME/go*
+          rm -rf go${ secrets.GO_VERSION }.linux-${ secrets.ARCH }.tar.gz*
+          rm -rf tmp/kubernetes*
+       
+      - name: Install the go and export its path
+        run: |
+          wget https://go.dev/dl/go${ secrets.GO_VERSION }.linux-${ secrets.ARCH }.tar.gz
+          tar -xzf go${ secrets.GO_VERSION }.linux-${ secrets.ARCH }.tar.gz
+          export PATH=$PATH:root/go/bin
+      
+      - name: Install the Kind
+        run: |
+          wget https://github.com/kubernetes-sigs/kind/releases/download/${ secrets.KIND_VERSION }/kind-linux-${ secrets.ARCH }
+          chmod u+x kind-linux-${ secrets.ARCH }
+          echo -e "Check the kind version\n"
+          ./kind-linux-${ secrets.ARCH } version
+         
+      - name: Clone the Kubernetes Source code\n
+        run: |
+          mkdir -p tmp/kubernetes
+          git clone --single-branch --branch ${{ secrets.KUBE_VERSION }} https://github.com/kubernetes/kubernetes tmp/kubernetes
+          
+      - name: Build node image
+        run: | 
+          ./kind-linux-${ secrets.ARCH } build node-image $PWD/tmp/kubernetes --image mayurwaghmode111/node-testing:${{ secrets.KUBE_VERSION }}
+          
+      - name: Create cluster
+        run: |
+          ./kind-linux-${ secrets.ARCH } create cluster -v7 --wait 1m --retain --image mayurwaghmode111/node-testing:${{ secrets.KUBE_VERSION }}
+
+      - name: Get Cluster status
+        run: |
+          # wait network is ready
+          kubectl wait --for=condition=ready pods --namespace=kube-system -l k8s-app=kube-dns
+          kubectl get nodes -o wide
+          kubectl get pods -A
+
+      - name: Login to Quay.io
+        uses: docker/login-action@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}     
+          
+      - name: Publish image
+        run: |
+          docker tag mayurwaghmode111/node-testing:${{ secrets.KUBE_VERSION }} quay.io/mayurwaghmode111/node-testing:${{ secrets.KUBE_VERSION }}
+          docker push quay.io/mayurwaghmode111/node-testing:${{ secrets.KUBE_VERSION }}
