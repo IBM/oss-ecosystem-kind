@@ -71,8 +71,8 @@ jobs:
           
       - name: Publish image
         run: |
-          docker tag $REPO_NAME/$IMAGE:${{ secrets.KUBE_VERSION }} ghcr.io/$REPO_NAME/$IMAGE:${{ secrets.KUBE_VERSION }}
-          docker push ghcr.io/$REPO_NAME/$IMAGE:${{ secrets.KUBE_VERSION }}
+          docker tag $REPO_NAME/$IMAGE:${{ secrets.KUBE_VERSION }} ghcr.io/$REPO_OWNER/$IMAGE:${{ secrets.KUBE_VERSION }}
+          docker push ghcr.io/$REPO_OWNER/$IMAGE:${{ secrets.KUBE_VERSION }}
      
       - name: Delete cluster
         run: ./kind-linux-${{ secrets.ARCH }} delete cluster
