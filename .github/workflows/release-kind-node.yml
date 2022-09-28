@@ -10,9 +10,9 @@ on:
   workflow_dispatch:
  
 env:
-  IMAGE: node-ppc64le
-  REPO_OWNER: ${{ github.repository_owner }}
-  REPO_NAME: ${{ github.event.repository.name }}
+  REGISTRY: ghcr.io
+  REPO_NAME: ${{ github.repository }}
+  IMAGE_NAME: node-ppc64le
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build
@@ -48,11 +48,11 @@ jobs:
           
       - name: Build node image
         run: | 
-          ./kind-linux-${{ secrets.ARCH }} build node-image $PWD/tmp/kubernetes --image $REPO_NAME/$IMAGE:${{ secrets.KUBE_VERSION }}
+          ./kind-linux-${{ secrets.ARCH }} build node-image $PWD/tmp/kubernetes --image $REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }}
           
       - name: Create cluster
         run: |
-          ./kind-linux-${{ secrets.ARCH }} create cluster -v7 --wait 1m --retain --image $REPO_NAME/$IMAGE:${{ secrets.KUBE_VERSION }}
+          ./kind-linux-${{ secrets.ARCH }} create cluster -v7 --wait 1m --retain --image $REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }}
 
       - name: Get Cluster status
         run: |
@@ -62,17 +62,17 @@ jobs:
           kubectl get pods -A
 
       - name: Login to GitHub Container Registry
+        if: github.event_name == 'push'
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ github.token }}
-        if: github.event_name == 'push'
-          
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish image
         run: |
-          docker tag $REPO_NAME/$IMAGE:${{ secrets.KUBE_VERSION }} ghcr.io/$REPO_OWNER/$IMAGE:${{ secrets.KUBE_VERSION }}
-          docker push ghcr.io/$REPO_OWNER/$IMAGE:${{ secrets.KUBE_VERSION }}
+          docker tag $REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }} ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/$${{ env.IMAGE_NAME }}:${{ secrets.KUBE_VERSION }}
+          docker push ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ secrets.KUBE_VERSION }}
      
       - name: Delete cluster
         run: ./kind-linux-${{ secrets.ARCH }} delete cluster
