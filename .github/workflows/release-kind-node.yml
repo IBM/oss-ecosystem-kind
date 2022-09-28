@@ -21,7 +21,10 @@ jobs:
       steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-          
+      
+      - name: make sure repository is lowercase
+        run: echo "SAFE_REPO_NAME=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+      
       - name: Do the cleanup
         run: |
           rm -rf $HOME/go*
@@ -48,11 +51,11 @@ jobs:
           
       - name: Build node image
         run: | 
-          ./kind-linux-${{ secrets.ARCH }} build node-image $PWD/tmp/kubernetes --image $REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }}
+          ./kind-linux-${{ secrets.ARCH }} build node-image $PWD/tmp/kubernetes --image $SAFE_REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }}
           
       - name: Create cluster
         run: |
-          ./kind-linux-${{ secrets.ARCH }} create cluster -v7 --wait 1m --retain --image $REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }}
+          ./kind-linux-${{ secrets.ARCH }} create cluster -v7 --wait 1m --retain --image $SAFE_REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }}
 
       - name: Get Cluster status
         run: |
@@ -71,8 +74,8 @@ jobs:
 
       - name: Publish image
         run: |
-          docker tag $REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }} ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/$${{ env.IMAGE_NAME }}:${{ secrets.KUBE_VERSION }}
-          docker push ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ secrets.KUBE_VERSION }}
+          docker tag $SAFE_REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }} ${{ env.REGISTRY }}/${{ env.SAFE_REPO_NAME }}/$${{ env.IMAGE_NAME }}:${{ secrets.KUBE_VERSION }}
+          docker push ${{ env.REGISTRY }}/${{ env.SAFE_REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ secrets.KUBE_VERSION }}
      
       - name: Delete cluster
         run: ./kind-linux-${{ secrets.ARCH }} delete cluster
