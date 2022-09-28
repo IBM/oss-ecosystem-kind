@@ -51,11 +51,11 @@ jobs:
           
       - name: Build node image
         run: | 
-          ./kind-linux-${{ secrets.ARCH }} build node-image $PWD/tmp/kubernetes --image $SAFE_REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }}
+          ./kind-linux-${{ secrets.ARCH }} build node-image $PWD/tmp/kubernetes --image $SAFE_REPO_NAME:${{ secrets.KUBE_VERSION }}
           
       - name: Create cluster
         run: |
-          ./kind-linux-${{ secrets.ARCH }} create cluster -v7 --wait 1m --retain --image $SAFE_REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }}
+          ./kind-linux-${{ secrets.ARCH }} create cluster -v7 --wait 1m --retain --image $SAFE_REPO_NAME:${{ secrets.KUBE_VERSION }}
 
       - name: Get Cluster status
         run: |
@@ -74,8 +74,8 @@ jobs:
 
       - name: Publish image
         run: |
-          docker tag $SAFE_REPO_NAME/$IMAGE_NAME:${{ secrets.KUBE_VERSION }} ${{ env.REGISTRY }}/${{ env.SAFE_REPO_NAME }}/$${{ env.IMAGE_NAME }}:${{ secrets.KUBE_VERSION }}
-          docker push ${{ env.REGISTRY }}/${{ env.SAFE_REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ secrets.KUBE_VERSION }}
+          docker tag $SAFE_REPO_NAME:${{ secrets.KUBE_VERSION }} ${{ env.REGISTRY }}/${{ env.SAFE_REPO_NAME }}:${{ secrets.KUBE_VERSION }}
+          docker push ${{ env.REGISTRY }}/${{ env.SAFE_REPO_NAME }}:${{ secrets.KUBE_VERSION }}
      
       - name: Delete cluster
         run: ./kind-linux-${{ secrets.ARCH }} delete cluster
