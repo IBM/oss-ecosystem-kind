@@ -1,18 +1,12 @@
 name: Docker
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 on:
   push:
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: IBM/oss-ecosystem-kind_node_ppc64le
+  IMAGE_NAME: IBM/kind-node
   VERSION: v1.25.2
   KIND_VERSION: v0.16.0
 
@@ -30,13 +24,11 @@ jobs:
         uses: actions/checkout@v3
         
       - name: make sure repository is lowercase
-        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >>${GITHUB_ENV}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
-      # Login against a Docker registry except on PR
-      # https://github.com/docker/login-action
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -54,6 +46,7 @@ jobs:
           mkdir -p tmp/kubernetes
           git clone --single-branch --branch v1.25.2 https://github.com/kubernetes/kubernetes tmp/kubernetes
           kind build node-image $PWD/tmp/kubernetes --arch ppc64le --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+     
       - name: Publish image
         if: github.event_name != 'pull_request'
         run: |
