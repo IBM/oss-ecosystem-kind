@@ -13,7 +13,7 @@ sudo mv ./kind /usr/local/bin/kind
 Once you have Kind installed, you can create a Kubernetes cluster by running the below command:
 
 ``` 
-kind create cluster --image ghcr.io/ibm/kind-node:v1.25.2
+kind create cluster --image ghcr.io/ibm/kind-node
 ```
 
 To list cluster, run the command ```kind get clusters```, which outputs:
