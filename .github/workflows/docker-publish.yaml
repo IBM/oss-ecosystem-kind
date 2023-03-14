@@ -7,7 +7,7 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: IBM/kind-node
-  VERSION: v1.26.0
+  VERSION: v1.26.2
   KIND_VERSION: v0.17.0
 
 
@@ -44,7 +44,7 @@ jobs:
       - name: Build kind image
         run: |
           mkdir -p tmp/kubernetes
-          git clone --single-branch --branch v1.26.0 https://github.com/kubernetes/kubernetes tmp/kubernetes
+          git clone --single-branch --branch v1.26.2 https://github.com/kubernetes/kubernetes tmp/kubernetes
           kind build node-image $PWD/tmp/kubernetes --arch ppc64le --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
      
       - name: Publish image
